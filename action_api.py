@@ -189,10 +189,10 @@ async def upgrade_sword(request: Request):
         cost = 1000
 
         if balance < cost:
-            return item_grade, balance, "골드 부족"
+            return errorMessage(title="잔액 부족", description="골드가 부족합니다.")
 
         await UserDB.update(user_id, {"balance":balance-cost})
-        success_chance = self.probabilities.get(item_grade+1, 0)
+        success_chance = probabilities.get(item_grade+1, 0)
 
         if random.random() < success_chance:
             await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade+1}}})
@@ -343,6 +343,9 @@ async def upgrade_sword(request: Request):
                             ]
                         }
                     }
+
+    else: 
+        return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
 
 
 @app.post("/coin_flip")
