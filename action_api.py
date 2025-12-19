@@ -100,7 +100,7 @@ async def signup(request: Request):
 
 
     if await UserDB.load(user_id) == None:
-        user = {"id":user_id, "balance":100000, "adventure":{"chapter":1, "stage":1}, "coin_flip":{"streak":0}}
+        user = {"id":user_id, "balance":100000, "adventure":{"chapter":1, "stage":1}, "coin_flip":{"streak":0}, "item_upgrade":{"item":{"grade":0}}}
 
         await UserDB.upload(dict(user))
 
@@ -160,6 +160,147 @@ async def adventure(request: Request):
             ]
         }
     }
+
+@app.post("/upgrade_sword")
+async def upgrade_sword(request: Request):
+    body = await request.json()
+    user_id = body["userRequest"]["user"]["id"]
+    
+    probabilities = {
+                        1: 1.0, 2: 1.0, 3: 1.0, 4: 0.9, 5: 0.5,
+                        6: 0.4, 7: 0.3, 8: 0.2, 9: 0.15, 10: 0.1,
+                        11: 0.05, 12: 0.03, 13: 0.02, 14: 0.015,
+                        15: 0.008, 16: 0.004, 17: 0.002, 18: 0.0008, 19: 0.0003, 20: 0.0001
+                    }
+
+    user = await UserDB.load(user_id)
+
+    if user: 
+        balance = user['balance'] 
+        item_grade = user['item_upgrade']['item']['grade']
+
+        cost = 1000
+
+        if balance < cost:
+            return item_grade, balance, "골드 부족"
+
+        await UserDB.update(user_id, {"balance":balance-cost})
+        success_chance = self.probabilities.get(item_grade+1, 0)
+
+        if random.random() < success_chance:
+            await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade+1}}})
+            
+            return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1}",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "강화",
+                                    "messageText": "강화"
+                                    }
+                                ]
+                                }
+                            }
+                            ]
+                        }
+                    }
+
+            return next_level, balance, f"성공 ({item_grade+1}강)"
+
+        else:
+            if level <= 5:
+                await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade}}})
+
+                return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade+1} (+0)",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "강화",
+                                    "messageText": "강화"
+                                    }
+                                ]
+                                }
+                            }
+                            ]
+                        }
+                    }
+
+            if level <= 10:
+                failed_grade = max(0, item_grade - 2)
+                dropped_levels = item_grade - failed_grade
+
+                await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":failed_grade}}})
+
+                return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade+1} (⬇ {dropped_levels})",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "강화",
+                                    "messageText": "강화"
+                                    }
+                                ]
+                                }
+                            }
+                            ]
+                        }
+                    }
+
+            else:
+                await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":0}}})
+
+                return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 ⬇ (-{item_grade})",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "강화",
+                                    "messageText": "강화"
+                                    }
+                                ]
+                                }
+                            }
+                            ]
+                        }
+                    }
+
 
 @app.post("/coin_flip")
 async def coin_flip(request: Request):
