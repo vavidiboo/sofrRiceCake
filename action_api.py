@@ -216,7 +216,7 @@ async def upgrade_sword(request: Request):
                             {
                                 "basicCard": {
                                 "title": f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1}",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": coin_image[status]
                                 },
@@ -258,7 +258,7 @@ async def upgrade_sword(request: Request):
                             {
                                 "basicCard": {
                                 "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade+1} (+0)",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": coin_image[status]
                                 },
@@ -300,7 +300,7 @@ async def upgrade_sword(request: Request):
                             {
                                 "basicCard": {
                                 "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade+1} (⬇ {dropped_levels})",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": coin_image[status]
                                 },
@@ -327,7 +327,7 @@ async def upgrade_sword(request: Request):
                             {
                                 "basicCard": {
                                 "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 ⬇ (-{item_grade})",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
+                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": item_image[0]
                                 },
