@@ -215,7 +215,7 @@ async def upgrade_sword(request: Request):
                             "outputs": [
                             {
                                 "basicCard": {
-                                "title": f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1}",
+                                "title": f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1} (⬆ 1)",
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": image,
@@ -258,7 +258,7 @@ async def upgrade_sword(request: Request):
                             "outputs": [
                             {
                                 "basicCard": {
-                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade} (+0)",
+                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade} (⬇ 0)",
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": image,
@@ -329,7 +329,7 @@ async def upgrade_sword(request: Request):
                             "outputs": [
                             {
                                 "basicCard": {
-                                "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 ⬇ (-{item_grade})",
+                                "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 (⬇ {item_grade})",
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": item_image[0],
