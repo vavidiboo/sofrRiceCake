@@ -6,11 +6,12 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 
-cred_path = os.getenv('FIREBASE_CREDENTIALS_PATH', 'softc-7cb3c-firebase-adminsdk-fbsvc-7f254a30ef.json')
-DataBase.connect(cred_path)
 
+key_dict = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"]) 
+DataBase.connect(key_dict)
 
 app = FastAPI()
+
 
 def errorMessage(title, description):
     return {
@@ -234,6 +235,7 @@ async def coin_flip(request: Request):
                 }
 
 uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
