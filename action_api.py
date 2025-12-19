@@ -219,7 +219,7 @@ async def upgrade_sword(request: Request):
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": image,
-                                    "fixedRatio": true
+                                    "fixedRatio": True
                                 },
                                 "buttons": [
                                     {
@@ -262,7 +262,7 @@ async def upgrade_sword(request: Request):
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": image,
-                                    "fixedRatio": true
+                                    "fixedRatio": True
                                 },
                                 "buttons": [
                                     {
@@ -305,7 +305,7 @@ async def upgrade_sword(request: Request):
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": image,
-                                    "fixedRatio": true
+                                    "fixedRatio": True
                                 },
                                 "buttons": [
                                     {
@@ -333,7 +333,7 @@ async def upgrade_sword(request: Request):
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
                                 "thumbnail": {
                                     "imageUrl": item_image[0],
-                                    "fixedRatio": true
+                                    "fixedRatio": True
                                 },
                                 "buttons": [
                                     {
