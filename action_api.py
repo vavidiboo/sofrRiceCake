@@ -13,7 +13,6 @@ DataBase.connect(key_dict)
 
 app = FastAPI()
 
-
 def errorMessage(title, description):
     return {
                 "version": "2.0",
@@ -169,77 +168,77 @@ async def coin_flip(request: Request):
     answer = coin_status[status]
 
     user = await UserDB.load(user_id)
-    balance = user['balance'] 
-    streak = user['coin_flip']['streak']
 
-    if answer == user_answer:     
-        bouns = 50 * (2 ** streak)
+    if user:
 
-        description = "승리!"
+        balance = user['balance'] 
+        streak = user['coin_flip']['streak']
 
-        if streak+1 >= 2: 
-            description = f"🔥 {streak+1}연승 중!!  {2 ** streak}배 보상!"
+        if answer == user_answer:     
+            bouns = 50 * (2 ** streak)
 
-        await UserDB.update(user_id, {"coin_flip":{"streak": streak+1}})
-        await UserDB.update(user_id, {"balance":balance+bouns})
+            description = "승리!"
 
-        return {
-                    "version": "2.0",
-                    "template": {
-                        "outputs": [
-                        {
-                            "basicCard": {
-                            "title": f"{answer}면!",
-                            "description": f"{description} \n잔고 : {(balance + bouns):,}원 (+{bouns:,}원)",
-                            "thumbnail": {
-                                "imageUrl": coin_image[status]
-                            },
-                            "buttons": [
-                                {
-                                "action": "message",
-                                "label": "다시하기",
-                                "messageText": "동전 던지기"
+            if streak+1 >= 2: 
+                description = f"🔥 {streak+1}연승 중!!  {2 ** streak}배 보상!"
+
+            await UserDB.update(user_id, {"coin_flip":{"streak": streak+1}})
+            await UserDB.update(user_id, {"balance":balance+bouns})
+
+            return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"{answer}면!",
+                                "description": f"{description} \n잔고 : {(balance + bouns):,}원 (+{bouns:,}원)",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "다시하기",
+                                    "messageText": "동전 던지기"
+                                    }
+                                ]
                                 }
-                            ]
                             }
+                            ]
                         }
-                        ]
                     }
-                }
 
-    else:         
-        await UserDB.update(user_id, {"coin_flip":{"streak": 0}})
-        await UserDB.update(user_id, {"balance":balance-50})
+        else:         
+            await UserDB.update(user_id, {"coin_flip":{"streak": 0}})
+            await UserDB.update(user_id, {"balance":balance-50})
 
-        return {
-                    "version": "2.0",
-                    "template": {
-                        "outputs": [
-                        {
-                            "basicCard": {
-                            "title": f"{answer}면!",
-                            "description": f"패배하였습니다. \n잔고 : {(balance - 50):,}원 (-50원)",
-                            "thumbnail": {
-                                "imageUrl": coin_image[status]
-                            },
-                            "buttons": [
-                                {
-                                "action": "message",
-                                "label": "다시하기",
-                                "messageText": "동전 던지기"
+            return {
+                        "version": "2.0",
+                        "template": {
+                            "outputs": [
+                            {
+                                "basicCard": {
+                                "title": f"{answer}면!",
+                                "description": f"패배하였습니다. \n잔고 : {(balance - 50):,}원 (-50원)",
+                                "thumbnail": {
+                                    "imageUrl": coin_image[status]
+                                },
+                                "buttons": [
+                                    {
+                                    "action": "message",
+                                    "label": "다시하기",
+                                    "messageText": "동전 던지기"
+                                    }
+                                ]
                                 }
-                            ]
                             }
+                            ]
                         }
-                        ]
                     }
-                }
+
+    else: 
+        return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
+
 
 uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
-
-
-
-
