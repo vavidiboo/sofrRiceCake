@@ -66,28 +66,32 @@ async def show_advanture_status(request: Request):
 
     user = await UserDB.load(user_id)
 
-    max_chapter = int(user['adventure']['chapter'])
+    if user:
+        max_chapter = int(user['adventure']['chapter'])
 
-    status = {0: "탐험할 수 있는 지역입니다.", 1: "아직 탐험할 수 없는 지영입니다."}
+        status = {0: "탐험할 수 있는 지역입니다.", 1: "아직 탐험할 수 없는 지영입니다."}
 
-    
+        
 
-    stage_status = [0 if i <= max_chapter else 1 for i in range(1, 8)]
+        stage_status = [0 if i <= max_chapter else 1 for i in range(1, 8)]
 
-    print(stage_status)
+        print(stage_status)
 
-    return {
-        "version": "2.0",
-        "data": {
-            "1st": status[stage_status[0]],
-            "2st": status[stage_status[1]],
-            "3st": status[stage_status[2]],
-            "4st": status[stage_status[3]],
-            "5st": status[stage_status[4]],
-            "6st": status[stage_status[5]],
-            "7st": status[stage_status[6]]
+        return {
+            "version": "2.0",
+            "data": {
+                "1st": status[stage_status[0]],
+                "2st": status[stage_status[1]],
+                "3st": status[stage_status[2]],
+                "4st": status[stage_status[3]],
+                "5st": status[stage_status[4]],
+                "6st": status[stage_status[5]],
+                "7st": status[stage_status[6]]
+            }
         }
-    }
+
+    else: 
+        return errorMessage(title='등록되지 않은 사용자', description="등록을 입력 후 다시 시도해주세요.")
 
 @app.post("/signup")
 async def signup(request: Request):
