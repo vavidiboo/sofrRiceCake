@@ -5,6 +5,7 @@ from db import DataBase, UserDB
 import firebase_admin
 from firebase_admin import credentials
 import os
+import json
 
 
 key_dict = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"]) 
@@ -235,6 +236,7 @@ async def coin_flip(request: Request):
                 }
 
 uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
