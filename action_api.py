@@ -165,6 +165,13 @@ async def adventure(request: Request):
 async def upgrade_sword(request: Request):
     body = await request.json()
     user_id = body["userRequest"]["user"]["id"]
+
+    item_image = {
+        0: "https://i.ifh.cc/3Wv0hb.png", 
+        5: "https://i.ifh.cc/ywADHm.png",
+        10: "https://i.ifh.cc/oAjLFn.png",
+        15: "https://i.ifh.cc/Or8YwG.png"
+    }
     
     probabilities = {
                         1: 1.0, 2: 1.0, 3: 1.0, 4: 0.9, 5: 0.5,
@@ -189,7 +196,19 @@ async def upgrade_sword(request: Request):
 
         if random.random() < success_chance:
             await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade+1}}})
+
+            if item_grade+1 < 5: 
+                image = item_image[0]
             
+            elif item_grade+1 < 10: 
+                image = item_image[5]
+            
+            elif item_grade+1 < 10: 
+                image = item_image[10]
+                
+            else:
+                image = item_image[15]
+
             return {
                         "version": "2.0",
                         "template": {
@@ -218,6 +237,18 @@ async def upgrade_sword(request: Request):
 
         else:
             if level <= 5:
+                if item_grade+1 < 5: 
+                    image = item_image[0]
+            
+                elif item_grade+1 < 10: 
+                    image = item_image[5]
+                
+                elif item_grade+1 < 15: 
+                    image = item_image[10]
+                    
+                else:
+                    image = item_image[15]
+
                 await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade}}})
 
                 return {
@@ -247,6 +278,18 @@ async def upgrade_sword(request: Request):
             if level <= 10:
                 failed_grade = max(0, item_grade - 2)
                 dropped_levels = item_grade - failed_grade
+
+                if failed_grade < 5: 
+                    image = item_image[0]
+            
+                elif failed_grade < 10: 
+                    image = item_image[5]
+                
+                elif failed_grade < 15: 
+                    image = item_image[10]
+                    
+                else:
+                    image = item_image[15]
 
                 await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":failed_grade}}})
 
@@ -286,7 +329,7 @@ async def upgrade_sword(request: Request):
                                 "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 ⬇ (-{item_grade})",
                                 "description": f"사용 골드 : {cost} \n잔고 : {(balance + bouns):,}원",
                                 "thumbnail": {
-                                    "imageUrl": coin_image[status]
+                                    "imageUrl": item_image[0]
                                 },
                                 "buttons": [
                                     {
