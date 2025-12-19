@@ -91,7 +91,7 @@ async def show_advanture_status(request: Request):
         }
 
     else: 
-        return errorMessage(title='등록되지 않은 사용자', description="등록을 입력 후 다시 시도해주세요.")
+        return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
 
 @app.post("/signup")
 async def signup(request: Request):
@@ -112,8 +112,8 @@ async def signup(request: Request):
 @app.post("/open_box")
 async def open_box(request: Request):
     body = await request.json()
-    user_id = body["userRequest"]["user"]["id"]
 
+    user_id = body["userRequest"]["user"]["id"]
     count = body["action"]["params"]["개수"]
 
     result_text = f"@{user_id}님,{count}개 상자를 열었더니 100골드를 얻었습니다!"
@@ -133,14 +133,17 @@ async def check_balance(request: Request):
     user_id = body["userRequest"]["user"]["id"]
 
     user = await UserDB.load(user_id)
-    print(user_id)
-
-    return {
-        "version": "2.0",
-        "data": {
-            "balance": f"{user['balance']:,}원"
+    
+    if user:
+        return {
+            "version": "2.0",
+            "data": {
+                "balance": f"{user['balance']:,}원"
+            }
         }
-    }
+
+    else: 
+        return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
 
 @app.post("/adventure")
 async def adventure(request: Request):
