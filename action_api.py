@@ -237,7 +237,7 @@ async def upgrade_sword(request: Request):
             return next_level, balance, f"성공 ({item_grade+1}강)"
 
         else:
-            if level <= 5:
+            if item_grade <= 5:
                 if item_grade+1 < 5: 
                     image = item_image[0]
             
@@ -277,7 +277,7 @@ async def upgrade_sword(request: Request):
                         }
                     }
 
-            if level <= 10:
+            if item_grade <= 10:
                 failed_grade = max(0, item_grade - 2)
                 dropped_levels = item_grade - failed_grade
 
