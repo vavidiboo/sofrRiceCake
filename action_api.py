@@ -6,6 +6,7 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 import json
+from kakaopy import KakaoResponse as kakao
 
 
 key_dict = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"]) 
@@ -14,40 +15,10 @@ DataBase.connect(key_dict)
 app = FastAPI()
 
 def errorMessage(title, description):
-    return {
-                "version": "2.0",
-                "template": {
-                    "outputs": [
-                    {
-                        "basicCard": {
-                        "title": title,
-                        "description": description,
-                        "thumbnail": {
-                            "imageUrl": "https://i.ifh.cc/RgHrDl.jpg"
-                                        }
-                                    }
-                    }
-                                ]
-                                }
-            }
+    return kakao.basic_card(title=title, desc=description, image_url="https://i.ifh.cc/RgHrDl.jpg")
 
 def okMessage(title, description):
-    return {
-                "version": "2.0",
-                "template": {
-                    "outputs": [
-                    {
-                        "basicCard": {
-                        "title": title,
-                        "description": description,
-                        "thumbnail": {
-                            "imageUrl": "https://i.ifh.cc/M9WJWN.jpg"
-                                        }
-                                    }
-                    }
-                                ]
-                                }
-            }
+    return kakao.basic_card(title=title, desc=description, image_url="https://i.ifh.cc/M9WJWN.jpg")
 
 @app.post("/")
 async def root(request: Request):
@@ -77,18 +48,15 @@ async def show_advanture_status(request: Request):
 
         print(stage_status)
 
-        return {
-            "version": "2.0",
-            "data": {
-                "1st": status[stage_status[0]],
-                "2st": status[stage_status[1]],
-                "3st": status[stage_status[2]],
-                "4st": status[stage_status[3]],
-                "5st": status[stage_status[4]],
-                "6st": status[stage_status[5]],
-                "7st": status[stage_status[6]]
-            }
-        }
+        return kakao.data_payload({
+            "1st": status[stage_status[0]],
+            "2st": status[stage_status[1]],
+            "3st": status[stage_status[2]],
+            "4st": status[stage_status[3]],
+            "5st": status[stage_status[4]],
+            "6st": status[stage_status[5]],
+            "7st": status[stage_status[6]]
+        })
 
     else: 
         return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
@@ -118,14 +86,7 @@ async def open_box(request: Request):
 
     result_text = f"@{user_id}님,{count}개 상자를 열었더니 100골드를 얻었습니다!"
 
-    return {
-        "version": "2.0",
-        "template": {
-            "outputs": [
-                {"simpleText": {"text": result_text}}
-            ]
-        }
-    }
+    return kakao.simple_text(result_text)
 
 @app.post("/check_balance")
 async def check_balance(request: Request):
@@ -135,12 +96,7 @@ async def check_balance(request: Request):
     user = await UserDB.load(user_id)
     
     if user:
-        return {
-            "version": "2.0",
-            "data": {
-                "balance": f"{user['balance']:,}원"
-            }
-        }
+        return kakao.data_payload({"balance": f"{user['balance']:,}원"})
 
     else: 
         return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
@@ -152,26 +108,23 @@ async def adventure(request: Request):
 
     user_id = body["userRequest"]["user"]["id"]
     
-    return {
-        "version": "2.0",
-        "template": {
-            "outputs": [
-                {"simpleText": {"text": "HI"}}
-            ]
-        }
-    }
+    return kakao.simple_text("HI")
 
 @app.post("/upgrade_sword")
 async def upgrade_sword(request: Request):
+
+    def item_image_for(grade: int) -> str:
+        """Return the appropriate item image by grade."""
+        if grade < 5:
+            return "https://i.ifh.cc/3Wv0hb.png"
+        if grade < 10:
+            return "https://i.ifh.cc/ywADHm.png"
+        if grade < 15:
+            return "https://i.ifh.cc/oAjLFn.png"
+        return "https://i.ifh.cc/Or8YwG.png"
+
     body = await request.json()
     user_id = body["userRequest"]["user"]["id"]
-
-    item_image = {
-        0: "https://i.ifh.cc/3Wv0hb.png", 
-        5: "https://i.ifh.cc/ywADHm.png",
-        10: "https://i.ifh.cc/oAjLFn.png",
-        15: "https://i.ifh.cc/Or8YwG.png"
-    }
     
     probabilities = {
                         1: 1.0, 2: 1.0, 3: 1.0, 4: 0.9, 5: 0.5,
@@ -179,6 +132,12 @@ async def upgrade_sword(request: Request):
                         11: 0.05, 12: 0.03, 13: 0.02, 14: 0.015,
                         15: 0.008, 16: 0.004, 17: 0.002, 18: 0.0008, 19: 0.0003, 20: 0.0001
                     }
+
+    crit_probabilities = {
+        1: 0.10, 2: 0.09, 3: 0.08, 4: 0.07, 5: 0.06,
+        6: 0.05, 7: 0.04, 8: 0.03, 9: 0.02, 10: 0.015,
+        11: 0.01, 12: 0.008, 13: 0.005, 14: 0.003
+                         }
 
     user = await UserDB.load(user_id)
 
@@ -194,159 +153,76 @@ async def upgrade_sword(request: Request):
         await UserDB.update(user_id, {"balance":balance-cost})
         success_chance = probabilities.get(item_grade+1, 0)
 
+        #강화 성공
         if random.random() < success_chance:
+            if random.random() < crit_probabilities.get(item_grade + 1, 0.0):
+                await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade+2}}})
+
+                return kakao.basic_card(
+                    title=f"💥 크리티컬 💥 +{item_grade} ➝ +{item_grade+2} (⬆ 2)",
+                    desc=f"{crit_probabilities.get(item_grade + 1, 0.0)*100}%의 확률로 강화에 성공하였습니다. \n사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    image_url=item_image_for(item_grade + 2),
+                    buttons=[kakao.message_button(label="강화", message="강화")],
+                    fixed_ratio=True
+                )
+
             await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade+1}}})
+            image = item_image_for(item_grade + 1)
 
-            if item_grade+1 < 5: 
-                image = item_image[0]
-            
-            elif item_grade+1 < 10: 
-                image = item_image[5]
-            
-            elif item_grade+1 < 10: 
-                image = item_image[10]
-                
-            else:
-                image = item_image[15]
+            return kakao.basic_card(
+                title=f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1} (⬆ 1)",
+                desc=f"{success_chance*100}%의 확률을 뚫고 강화에 성공하였습니다. \n사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                image_url=image,
+                buttons=[kakao.message_button(label="강화", message="강화")],
+                fixed_ratio=True
+            )
 
-            return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1} (⬆ 1)",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
-                                "thumbnail": {
-                                    "imageUrl": image,
-                                    "fixedRatio": True
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "강화",
-                                    "messageText": "강화"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
-
-            return next_level, balance, f"성공 ({item_grade+1}강)"
-
+        #강화 실패
         else:
-            if item_grade <= 5:
-                if item_grade+1 < 5: 
-                    image = item_image[0]
-            
-                elif item_grade+1 < 10: 
-                    image = item_image[5]
-                
-                elif item_grade+1 < 15: 
-                    image = item_image[10]
+            if item_grade <= 15:
+                def get_weighted_drop(level: int) -> int:
+                    if 6 <= level <= 9:
+                        # 80% -1, 20% -2
+                        return random.choices([-1, -2], weights=[80, 20])[0]
+
+                    elif 10 <= level <= 12:
+                        # 50% -1, 35% -2, 15% -3
+                        return random.choices([-1, -2, -3], weights=[50, 35, 15])[0]
+
+                    elif 13 <= level <= 15:
+                        # 40% -2, 35% -3, 25% -4
+                        return random.choices([-2, -3, -4], weights=[40, 35, 25])[0]
+
+                    return 0
+
+                dropped_level = get_weighted_drop(item_grade)
                     
-                else:
-                    image = item_image[15]
-
-                await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":item_grade}}})
-
-                return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{item_grade} (⬇ 0)",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
-                                "thumbnail": {
-                                    "imageUrl": image,
-                                    "fixedRatio": True
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "강화",
-                                    "messageText": "강화"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
-
-            if item_grade <= 10:
-                failed_grade = max(0, item_grade - 2)
+                failed_grade = max(0, item_grade - dropped_level)
                 dropped_levels = item_grade - failed_grade
 
-                if failed_grade < 5: 
-                    image = item_image[0]
-            
-                elif failed_grade < 10: 
-                    image = item_image[5]
-                
-                elif failed_grade < 15: 
-                    image = item_image[10]
-                    
-                else:
-                    image = item_image[15]
+                image = item_image_for(failed_grade)
 
                 await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":failed_grade}}})
 
-                return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"💥 강화 실패 💥 +{item_grade} ➝ +{failed_grade} (⬇ {dropped_levels})",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
-                                "thumbnail": {
-                                    "imageUrl": image,
-                                    "fixedRatio": True
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "강화",
-                                    "messageText": "강화"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
+                return kakao.basic_card(
+                    title=f"❌ 강화 실패 ❌ +{item_grade} ➝ +{failed_grade} (⬇ {dropped_levels})",
+                    desc=f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    image_url=image,
+                    buttons=[kakao.message_button(label="강화", message="강화")],
+                    fixed_ratio=True
+                )
 
             else:
                 await UserDB.update(user_id, {"item_upgrade":{"item":{"grade":0}}})
+                image = item_image_for(0)
 
-                return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"☠ 강화 실패 ☠ +{item_grade} ➝ 0 (⬇ {item_grade})",
-                                "description": f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
-                                "thumbnail": {
-                                    "imageUrl": item_image[0],
-                                    "fixedRatio": True
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "강화",
-                                    "messageText": "강화"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
+                return kakao.basic_card(
+                    title=f"☠️ 파괴 ☠️ +{item_grade} ➝ 0 (⬇ {item_grade})",
+                    desc=f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    image_url=image,
+                    buttons=[kakao.message_button(label="강화", message="강화")],
+                    fixed_ratio=True
+                )
 
     else: 
         return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
@@ -383,57 +259,23 @@ async def coin_flip(request: Request):
             await UserDB.update(user_id, {"coin_flip":{"streak": streak+1}})
             await UserDB.update(user_id, {"balance":balance+bouns})
 
-            return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"{answer}면!",
-                                "description": f"{description} \n잔고 : {(balance + bouns):,}원 (+{bouns:,}원)",
-                                "thumbnail": {
-                                    "imageUrl": coin_image[status]
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "다시하기",
-                                    "messageText": "동전 던지기"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
+            return kakao.basic_card(
+                title=f"{answer}면!",
+                desc=f"{description} \n잔고 : {(balance + bouns):,}원 (+{bouns:,}원)",
+                image_url=coin_image[status],
+                buttons=[kakao.message_button(label="다시하기", message="동전 던지기")]
+            )
 
         else:         
             await UserDB.update(user_id, {"coin_flip":{"streak": 0}})
             await UserDB.update(user_id, {"balance":balance-50})
 
-            return {
-                        "version": "2.0",
-                        "template": {
-                            "outputs": [
-                            {
-                                "basicCard": {
-                                "title": f"{answer}면!",
-                                "description": f"패배하였습니다. \n잔고 : {(balance - 50):,}원 (-50원)",
-                                "thumbnail": {
-                                    "imageUrl": coin_image[status]
-                                },
-                                "buttons": [
-                                    {
-                                    "action": "message",
-                                    "label": "다시하기",
-                                    "messageText": "동전 던지기"
-                                    }
-                                ]
-                                }
-                            }
-                            ]
-                        }
-                    }
+            return kakao.basic_card(
+                title=f"{answer}면!",
+                desc=f"패배하였습니다. \n잔고 : {(balance - 50):,}원 (-50원)",
+                image_url=coin_image[status],
+                buttons=[kakao.message_button(label="다시하기", message="동전 던지기")]
+            )
 
     else: 
         return errorMessage(title="등록되지 않은 사용자", description="\"등록\"을 입력하여 등록 후 다시 사용해주세요.")
