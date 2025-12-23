@@ -130,7 +130,7 @@ async def upgrade_sword(request: Request):
                         1: 1.0, 2: 1.0, 3: 1.0, 4: 0.9, 5: 0.5,
                         6: 0.4, 7: 0.3, 8: 0.2, 9: 0.15, 10: 0.1,
                         11: 0.05, 12: 0.03, 13: 0.02, 14: 0.015,
-                        15: 0.008, 16: 0.004, 17: 0.002, 18: 0.0008, 19: 0.0003, 20: 0.0001
+                        15: 0.008, 16: 0.001, 17: 0.0007, 18: 0.0005, 19: 0.0003, 20: 0.0001
                     }
 
     crit_probabilities = {
@@ -145,10 +145,17 @@ async def upgrade_sword(request: Request):
         balance = user['balance'] 
         item_grade = user['item_upgrade']['item']['grade']
 
-        cost = 1000
+        costs = {
+            1: 500, 2: 750, 3: 1100, 4: 1600, 5: 2400,     
+            6: 7000, 7: 10500, 8: 15500, 9: 23000, 10: 35000, 
+            11: 100000, 12: 150000, 13: 225000, 14: 340000, 15: 500000, 
+            16: 1500000, 17: 2250000, 18: 3400000, 19: 5000000, 20: 7500000  
+        }
+
+        cost = costs.get(item_grade+1, 0)
 
         if balance < cost:
-            return errorMessage(title="잔액 부족", description="골드가 부족합니다.")
+            return errorMessage(title="잔액 부족", description=f"골드가 부족합니다. \n잔고 : {(balance):,}원\n필요 골드 : {cost:,}원")
 
         await UserDB.update(user_id, {"balance":balance-cost})
         success_chance = probabilities.get(item_grade+1, 0)
@@ -160,7 +167,7 @@ async def upgrade_sword(request: Request):
 
                 return kakao.basic_card(
                     title=f"💥 크리티컬 💥 +{item_grade} ➝ +{item_grade+2} (⬆ 2)",
-                    desc=f"{crit_probabilities.get(item_grade + 1, 0.0)*100}%의 확률로 강화에 성공하였습니다. \n사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    desc=f"{crit_probabilities.get(item_grade + 1, 0.0)*100}%의 확률로 강화에 성공하였습니다. \n\n비용 : {cost:,}원 \n잔고: {(balance - cost):,}원",
                     image_url=item_image_for(item_grade + 2),
                     buttons=[kakao.message_button(label="강화", message="강화")],
                     fixed_ratio=True
@@ -171,7 +178,7 @@ async def upgrade_sword(request: Request):
 
             return kakao.basic_card(
                 title=f"⭐ 강화 성공 ⭐ +{item_grade} ➝ +{item_grade+1} (⬆ 1)",
-                desc=f"{success_chance*100}%의 확률을 뚫고 강화에 성공하였습니다. \n사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                desc=f"{success_chance*100}%의 확률을 뚫고 강화에 성공하였습니다. \n\n비용 : {cost:,}원 \n잔고: {(balance - cost):,}원",
                 image_url=image,
                 buttons=[kakao.message_button(label="강화", message="강화")],
                 fixed_ratio=True
@@ -206,7 +213,7 @@ async def upgrade_sword(request: Request):
 
                 return kakao.basic_card(
                     title=f"❌ 강화 실패 ❌ +{item_grade} ➝ +{failed_grade} (⬇ {dropped_levels})",
-                    desc=f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    desc=f"비용: {cost:,}원 \n잔고: {(balance - cost):,}원",
                     image_url=image,
                     buttons=[kakao.message_button(label="강화", message="강화")],
                     fixed_ratio=True
@@ -218,7 +225,7 @@ async def upgrade_sword(request: Request):
 
                 return kakao.basic_card(
                     title=f"☠️ 파괴 ☠️ +{item_grade} ➝ 0 (⬇ {item_grade})",
-                    desc=f"사용 골드 : {cost} \n잔고 : {(balance - cost):,}원",
+                    desc=f"비용: {cost:,}원 \n잔고: {(balance - cost):,}원",
                     image_url=image,
                     buttons=[kakao.message_button(label="강화", message="강화")],
                     fixed_ratio=True
