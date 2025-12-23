@@ -197,7 +197,7 @@ async def upgrade_sword(request: Request):
 
                 dropped_level = get_weighted_drop(item_grade)
                     
-                failed_grade = max(0, item_grade - dropped_level)
+                failed_grade = max(0, item_grade + dropped_level)
                 dropped_levels = item_grade - failed_grade
 
                 image = item_image_for(failed_grade)
